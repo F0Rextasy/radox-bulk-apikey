@@ -24,6 +24,12 @@
 
 </div>
 
+<div align="center">
+
+**English** · [Türkçe](README.tr.md) · [中文](README.cn.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md) · [Português](README.pt.md)
+
+</div>
+
 ---
 
 ## 🎁 Free tier — how much you get
@@ -48,16 +54,41 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 `GET https://radoxai.com/v1/models` serves 33 ids; **all 33 answered a live chat 200** when this tool was built (free tier covers the whole catalogue; nothing is paid-gated).
 
-| Family | Model IDs |
-| --- | --- |
-| **Anthropic** | `claude-opus-5`, `claude-opus-5.5`, `claude-opus-4.6`, `claude-opus-4.7`, `claude-opus-4.8`, `claude-sonnet-5`, `claude-fable-5`, `claude-fable-5.1`, `claude-mythos-preview` |
-| **OpenAI** | `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` |
-| **DeepSeek** | `deepseek-v4-pro-max`, `deepseek-v4-pro-0813`, `deepseek-v4-flash-0731` |
-| **Moonshot** | `kimi-k3`, `kimi-k2.6` |
-| **Z.ai (GLM)** | `glm-5.3`, `glm-5.2` |
-| **xAI** | `grok-4.6`, `grok-4.5` |
-| **Google** | `gemini-3.1-pro`, `gemini-3.6-flash`, `gemini-3.7-flash` |
-| **Alibaba / ByteDance / others** | `qwen3.8-max`, `qwen3.8-27b`, `qwen3.7-max`, `seed-2.1-pro`, `seed-2.1-turbo`, `muse-spark-1.1`, `gemma-2-2b` |
+|Model|✓|
+|---|---|
+|`claude-opus-5`|✓|
+|`claude-opus-5.5`|✓|
+|`claude-opus-4.6`|✓|
+|`claude-opus-4.7`|✓|
+|`claude-opus-4.8`|✓|
+|`claude-sonnet-5`|✓|
+|`claude-fable-5`|✓|
+|`claude-fable-5.1`|✓|
+|`claude-mythos-preview`|✓|
+|`gpt-5.5`|✓|
+|`gpt-5.5-pro`|✓|
+|`gpt-5.6-sol`|✓|
+|`gpt-5.6-terra`|✓|
+|`gpt-5.6-luna`|✓|
+|`deepseek-v4-pro-max`|✓|
+|`deepseek-v4-pro-0813`|✓|
+|`deepseek-v4-flash-0731`|✓|
+|`kimi-k3`|✓|
+|`kimi-k2.6`|✓|
+|`glm-5.3`|✓|
+|`glm-5.2`|✓|
+|`grok-4.6`|✓|
+|`grok-4.5`|✓|
+|`gemini-3.1-pro`|✓|
+|`gemini-3.6-flash`|✓|
+|`gemini-3.7-flash`|✓|
+|`qwen3.8-max`|✓|
+|`qwen3.8-27b`|✓|
+|`qwen3.7-max`|✓|
+|`seed-2.1-pro`|✓|
+|`seed-2.1-turbo`|✓|
+|`muse-spark-1.1`|✓|
+|`gemma-2-2b`|✓|
 
 Live probe of one key (this is exactly what the tool does before it accepts a key):
 
