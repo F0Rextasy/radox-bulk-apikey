@@ -6,6 +6,7 @@
   "type": "commonjs",
   "bin": {
     "radox-bulk-apikey": "src/cli.js",
+    "radox-bulk-apikey-9router": "src/connect-9router.js",
     "radox-bulk-apikey-launcher": "src/launcher.js"
   },
   "main": "src/cli.js",
