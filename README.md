@@ -118,7 +118,7 @@ The launcher asks for the proxy list, count and verification model, remembers th
 | Check | Result |
 | --- | --- |
 | account creation | `POST /register` creates the account; the provider's own mail step answers `500 Server Error` **after** the account exists — the tool continues on the session instead of aborting |
-| e-mail verification | 6-digit code from `/verify-email` (resend available); the signed code turns `/dashboard` into the real page |
+| e-mail verification | the mailbox carries a **6-digit code**; posting it to `POST /verify-email` (resend at `POST /verify-email/resend`) turns `/dashboard` into the real page |
 | key creation | `POST /dashboard/api-keys` — the plaintext key comes back once |
 | live proof | `POST /v1/chat/completions` — run for **every** key before it is written to `keys.txt` |
 | a key that fails the chat check | never written — the account stays recoverable in `accounts.json` |
