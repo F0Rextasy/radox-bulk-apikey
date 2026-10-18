@@ -23,6 +23,9 @@
  *   --screen           only test the proxy list against the host
  *   --model <id>       model used for the live verification (default claude-opus-5)
  *   --help
+ *   --preset=turbo|balanced|safe   run shape = workers + inter-account gap
+ *                      (turbo = 5 workers / 3 s — recommended; balanced = 4/6;
+ *                      safe = 2/8). Explicit --conc/--gap override the preset.
  *
  * Environment: RADOX_PROXIES (proxy list path, default proxies.txt)
  * Zero dependencies. Node.js >= 18.
@@ -32,6 +35,8 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 const { URL } = require('url');
+const { presetArgv, resolvePreset } = require('./preset');
+const { uaFor } = require('./ua-pool');
 
 const ROOT = path.resolve(__dirname, '..');
 const KEYS_FILE = path.join(ROOT, 'keys.txt');
@@ -54,6 +59,7 @@ if (has('help') || has('h')) {
   console.log('  node src/cli.js --count 50     mint (keys kept only after a 200)');
   console.log('  node src/cli.js --verify-only  re-check keys.txt');
   console.log('  node src/cli.js --screen       test the proxy list against Radox');
+  console.log('  node src/cli.js --preset=turbo --count 50 run shape (turbo = 5 workers)');
   console.log('\nEnv: RADOX_PROXIES (proxy list path, default proxies.txt)');
   process.exit(0);
 }
@@ -63,6 +69,26 @@ const MODEL = arg('model', 'claude-opus-5');
 const VERIFY_ONLY = has('verify-only');
 const SCREEN_ONLY = has('screen');
 const PROXY_FILE = process.env.RADOX_PROXIES || arg('proxies', 'proxies.txt');
+
+// Presets (operator standard v3): --preset picks workers + inter-account gap,
+// explicit --conc/--gap win over it, and without --preset the rail keeps
+// today's shape exactly (one account at a time, 900 ms pad).
+const flagVal = (n) => {
+  const eq = argv.find((a) => a.startsWith(`--${n}=`));
+  if (eq) return eq.split('=').slice(1).join('=');
+  return arg(n, null);
+};
+const numOrNull = (v) => {
+  const n = v === null || v === undefined || v === true ? NaN : parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
+};
+const PRESET_RUN = resolvePreset({
+  preset: presetArgv() || arg('preset', null),
+  conc: numOrNull(flagVal('conc')),
+  gap: numOrNull(flagVal('gap')),
+  defaultConc: 1,
+  defaultGap: 0.9,
+});
 
 function loadProxies() {
   const f = path.resolve(ROOT, PROXY_FILE);
@@ -78,13 +104,22 @@ function loadProxies() {
 }
 
 // ---------------------------------------------------------------- http core
-let jar = {};
-const cookieHeader = () => Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; ');
+// Per-account cookie isolation (operator standard v3): a --preset run keeps
+// several accounts in flight at once, so each account gets its own cookie jar
+// in the async context it was started in; absent --preset nothing changes.
+const { AsyncLocalStorage } = require('async_hooks');
+const SESS = new AsyncLocalStorage();
+const activeUa = (dflt) => { const s = SESS.getStore(); return (s && s.ua) || dflt; };
+let jar = {}; // fallback jar for requests made outside any account session
+const activeJar = () => { const s = SESS.getStore(); return s ? s.jar : jar; };
+const resetJar = () => { const s = SESS.getStore(); if (s) s.jar = {}; else jar = {}; };
+const cookieHeader = () => Object.entries(activeJar()).map(([k, v]) => `${k}=${v}`).join('; ');
 function absorb(res) {
+  const j = activeJar();
   for (const c of res.headers['set-cookie'] || []) {
     const [pair] = c.split(';');
     const i = pair.indexOf('=');
-    if (i > 0) jar[pair.slice(0, i).trim()] = pair.slice(i + 1);
+    if (i > 0) j[pair.slice(0, i).trim()] = pair.slice(i + 1);
   }
 }
 const jparse = (s) => { try { return JSON.parse(s); } catch (e) { return null; } };
@@ -99,7 +134,7 @@ function request(proxyLine, url, { method = 'GET', headers = {}, body = null, fo
   return new Promise((resolve, reject) => {
     const u = new URL(url);
     let payload = null;
-    const hs = { 'user-agent': UA, accept: 'text/html,application/json;q=0.9,*/*;q=0.8', ...headers };
+    const hs = { 'user-agent': activeUa(UA), accept: 'text/html,application/json;q=0.9,*/*;q=0.8', ...headers };
     if (form) {
       payload = Buffer.from(new URLSearchParams(form).toString());
       hs['content-type'] = 'application/x-www-form-urlencoded';
@@ -232,7 +267,7 @@ async function mintOne(proxies, proxy, index, accounts) {
   const addr = await newGmail(proxies, proxy);
   const username = 'radox' + Math.random().toString(36).slice(2, 8);
   const password = 'Rx' + Math.random().toString(36).slice(2, 10) + '!9';
-  jar = {};
+  resetJar();
   const pg = await requestR(proxies, proxy, `${BASE}/register`, { withCookies: true });
   const token = htmlToken(pg.text);
   if (!token) throw new Error('no csrf on register page');
@@ -293,25 +328,41 @@ async function mintOne(proxies, proxy, index, accounts) {
     appendKey(key);
     console.log('   written to keys.txt');
   }
-  return ok;
+  return { ok, key };
 }
 
 async function mint() {
   const proxies = loadProxies();
   const accounts = fs.existsSync(ACCOUNTS_FILE) ? jparse(fs.readFileSync(ACCOUNTS_FILE, 'utf8')) || [] : [];
-  let made = 0, attempts = 0;
-  while (made < COUNT && attempts < COUNT * 6) {
-    attempts++;
-    const proxy = proxies[attempts % proxies.length];
-    try {
-      const ok = await mintOne(proxies, proxy, accounts.length + 1, accounts);
-      if (ok) made++;
-    } catch (e) {
-      console.log(`#${accounts.length + 1} failed on ${proxy}: ${String((e && e.message) || e).slice(0, 140)}`);
+  const conc = Math.max(1, PRESET_RUN.conc);
+  const gapMs = Math.max(0, PRESET_RUN.gap) * 1000;
+  console.log(`RADOX-CLI run · count=${COUNT} conc=${conc} gap=${gapMs / 1000}s${PRESET_RUN.name ? ` preset=${PRESET_RUN.name}` : ''}`);
+  let made = 0, attempts = 0, next = 1;
+  async function worker() {
+    while (made < COUNT && attempts < COUNT * 6) {
+      const i = next++;
+      attempts++;
+      const proxy = proxies[attempts % proxies.length];
+      console.log(`… #${i} başladı (${proxy ? String(proxy).replace(/:[^:@]+@/, ':***@') : 'direct'})`);
+      try {
+        // Each account runs in its own async context so its cookie jar cannot
+        // mix with a sibling account's (turbo/balanced/safe runs).
+        const r = await SESS.run({ jar: {}, ua: uaFor(i).ua }, () => mintOne(proxies, proxy, accounts.length + 1, accounts));
+        if (r.ok) {
+          made++;
+          console.log(`✓ #${i} KEY ALINDI: ${String(r.key).slice(0, 22)}… [${made} ok / ${attempts} deneme]`);
+        } else {
+          console.log(`✗ #${i} key yok: chat gate failed`);
+        }
+      } catch (e) {
+        console.log(`✗ #${i} key yok: ${String((e && e.message) || e).slice(0, 140)}`);
+      }
+      if (gapMs) await sleep(gapMs);
     }
-    await sleep(900);
   }
+  await Promise.all(Array.from({ length: Math.min(conc, Math.max(1, COUNT)) }, () => worker()));
   console.log(`done: ${made} key(s) this run, ${accounts.length} account(s) total`);
+  console.log(`RADOX-CLI ${made}/${COUNT} OK`);
 }
 
 async function verifyOnly() {
