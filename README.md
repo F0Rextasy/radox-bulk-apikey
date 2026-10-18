@@ -20,32 +20,77 @@
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Quick start](#-quick-start) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🤖 Models & free tier](#-models--free-tier) · [🔌 9Router](#-connect-to-9router) · [🔑 What one key gets you](#-what-one-key-gets-you) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
+[🛠 Quick start](#-quick-start) · [🎁 Free tier](#-free-tier--how-much-you-get) · [🤖 Models](#-models--all-33-of-them) · [🧪 Use the API](#-how-to-use-the-api) · [✅ Verified](#-verified-working--every-key-is-tested) · [🧭 How it works](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Issues](#-issues)
 
 </div>
 
 ---
 
-## ✨ Why this exists
+## 🎁 Free tier — how much you get
 
-Radox AI runs a **free tier of 10M tokens every month, no card required**, on one OpenAI-compatible endpoint that fronts 33 models — Claude Opus 5/5.5/4.6–4.8, GPT-5.5/5.6, Gemini 3.x, DeepSeek V4, Kimi K2.6/K3, GLM 5.2/5.3, Grok 4.5/4.6 and more. Sign-up is plain e-mail + password (any provider e-mail works; custom domains are limited to one account), and the account's first key is minted from the dashboard. This tool turns that into a `keys.txt` where **every line survived a live chat call**.
+**Every new Radox account starts with 10M tokens / month on ALL 33 models — no card, no phone.**
 
-## 🤖 Models & free tier
-
-`GET /v1/models` serves 33 ids; **33/33 answered a live chat 200** during verification:
-
-| Model ID | note |
+| What | Value |
 | --- | --- |
-| `claude-opus-5`, `claude-opus-5.5`, `claude-opus-4.6`, `claude-opus-4.7`, `claude-opus-4.8` | the Claude family |
-| `claude-sonnet-5`, `claude-fable-5`, `claude-fable-5.1`, `claude-mythos-preview` | Claude variants |
-| `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` | OpenAI family |
-| `deepseek-v4-pro-max`, `deepseek-v4-pro-0813`, `deepseek-v4-flash-0731` | DeepSeek V4 |
-| `kimi-k2.6`, `kimi-k3` | Kimi |
-| `glm-5.2`, `glm-5.3` | GLM |
-| `grok-4.5`, `grok-4.6` | Grok |
-| `qwen3.7-max`, `qwen3.8-max`, `qwen3.8-27b`, `gemini-3.1-pro`, `gemini-3.6-flash`, `gemini-3.7-flash`, `seed-2.1-pro`, `seed-2.1-turbo`, `muse-spark-1.1`, `gemma-2-2b` | the rest of the catalogue |
+| Monthly allowance | **10,000,000 tokens** per account, on every model in the catalogue |
+| Card required | **No** |
+| Rate limit | 80 requests / minute |
+| Sign-up | e-mail + password (standard providers such as Gmail are accepted) |
+| The unit that scales | **one account = one key** → `--count N` is really "N free accounts" |
 
-**How much is free:** the published free tier is **10M tokens/month per account, 80 req/min, no card**, on every model. The grant is per account, so `--count N` multiplies it.
+> 💡 The free tier is set by Radox AI and can change. Check the live numbers at [radoxai.com](https://radoxai.com) — and let the tool's own gate decide:
+
+```bash
+node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
+```
+
+## 🤖 Models — all 33 of them
+
+`GET https://radoxai.com/v1/models` serves 33 ids; **all 33 answered a live chat 200** when this tool was built (free tier covers the whole catalogue; nothing is paid-gated).
+
+| Family | Model IDs |
+| --- | --- |
+| **Anthropic** | `claude-opus-5`, `claude-opus-5.5`, `claude-opus-4.6`, `claude-opus-4.7`, `claude-opus-4.8`, `claude-sonnet-5`, `claude-fable-5`, `claude-fable-5.1`, `claude-mythos-preview` |
+| **OpenAI** | `gpt-5.5`, `gpt-5.5-pro`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna` |
+| **DeepSeek** | `deepseek-v4-pro-max`, `deepseek-v4-pro-0813`, `deepseek-v4-flash-0731` |
+| **Moonshot** | `kimi-k3`, `kimi-k2.6` |
+| **Z.ai (GLM)** | `glm-5.3`, `glm-5.2` |
+| **xAI** | `grok-4.6`, `grok-4.5` |
+| **Google** | `gemini-3.1-pro`, `gemini-3.6-flash`, `gemini-3.7-flash` |
+| **Alibaba / ByteDance / others** | `qwen3.8-max`, `qwen3.8-27b`, `qwen3.7-max`, `seed-2.1-pro`, `seed-2.1-turbo`, `muse-spark-1.1`, `gemma-2-2b` |
+
+Live probe of one key (this is exactly what the tool does before it accepts a key):
+
+```bash
+curl https://radoxai.com/v1/chat/completions \
+  -H "Authorization: Bearer <one of your keys>" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-opus-5","messages":[{"role":"user","content":"hi"}],"max_tokens":8}'
+```
+
+## 🧪 How to use the API
+
+The base URL is **`https://radoxai.com/v1`** — OpenAI-compatible, so anything that speaks OpenAI works.
+
+**Any SDK / curl**
+
+```python
+from openai import OpenAI
+client = OpenAI(base_url="https://radoxai.com/v1", api_key="<your key>")
+print(client.chat.completions.create(model="kimi-k3",
+      messages=[{"role": "user", "content": "hi"}]).choices[0].message.content)
+```
+
+**Claude Code** (Anthropic-compatible surface — no `/v1` suffix on the base):
+
+```bash
+export ANTHROPIC_BASE_URL="https://radoxai.com"
+export ANTHROPIC_AUTH_TOKEN="<your key>"
+export ANTHROPIC_MODEL="claude-opus-5"
+claude
+```
+
+**Any agent / tool with a custom base URL** (Cursor, OpenCode, Kilo Code, …): set base URL `https://radoxai.com/v1`, paste a key, pick any model id from the table above.
 
 ## 🛠 Quick start
 
@@ -72,17 +117,11 @@ The launcher asks for the proxy list, count and verification model, remembers th
 
 | Check | Result |
 | --- | --- |
-| `POST /register` | creates the account; the provider's own mail step answers `500 Server Error` **after** the account and session exist (see "how") |
-| e-mail verification | resend from `/verify-email`, link read from the mailbox, `GET /email/verify/...` flips the session to verified |
-| key creation | `POST /dashboard/api-keys` with the session — the plaintext key comes back once |
-| `POST /v1/chat/completions` — run for **every** key before it is written | **200** with real content |
-| a key that fails its chat check | never written to `keys.txt` — the account stays recoverable in `accounts.json` |
-
-Re-check at any time:
-
-```bash
-node src/cli.js --verify-only
-```
+| account creation | `POST /register` creates the account; the provider's own mail step answers `500 Server Error` **after** the account exists — the tool continues on the session instead of aborting |
+| e-mail verification | 6-digit code from `/verify-email` (resend available); the signed code turns `/dashboard` into the real page |
+| key creation | `POST /dashboard/api-keys` — the plaintext key comes back once |
+| live proof | `POST /v1/chat/completions` — run for **every** key before it is written to `keys.txt` |
+| a key that fails the chat check | never written — the account stays recoverable in `accounts.json` |
 
 ## 🧭 How it works
 
@@ -97,17 +136,16 @@ inbox (one address per account)                                  a fresh address
 
 | Step | Call | Notes |
 | --- | --- | --- |
-| status | `GET /v1/models` | 33 ids, Bearer key |
-| signup | `POST /register {name,email,phone,password,password_confirmation,_token}` | Laravel form post with the page's `_token`; **the provider answers 500 while still creating the account** — the session that comes back is valid, so the tool continues instead of aborting |
-| verify | `POST /email/verification-notification` → mailbox link | the verification mail carries a signed link; following it with the session flips `/dashboard` from a redirect into the real page |
-| key | `POST /dashboard/api-keys` | returns the plaintext key once |
+| sign-up | `POST /register` | Laravel form post with the page `_token` |
+| verify | `POST /verify-email` | the 6-digit code from the mailbox |
+| key | `POST /dashboard/api-keys` | plaintext key returned once |
 | check | `POST /v1/chat/completions` | live 200 required before `keys.txt` |
 
 ## ⚙️ CLI options
 
 ```bash
 node src/cli.js --count N        # mint (default 50)
-node src/cli.js --verify-only    # re-check every key in keys.txt
+node src/cli.js --verify-only    # re-check every key in keys.txt with a live chat call
 node src/cli.js --help
 ```
 
@@ -117,7 +155,7 @@ node src/cli.js --help
 
 ## 🛰️ Behind a proxy
 
-Every request leaves through a proxy line from your pool; a dead line fails that attempt and the tool moves on.
+Every request leaves through a proxy line from your pool; a dead exit fails that attempt and the tool moves to the next — the account is retried on a fresh exit, never from your own IP.
 
 ## 📄 Files
 
@@ -134,6 +172,7 @@ Every request leaves through a proxy line from your pool; a dead line fails that
 
 ```bash
 node src/connect-9router.js
+# or: npm run 9router
 ```
 
 Defaults: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Models are then served as `radox/<model id>` and load-balanced across every key.
@@ -150,7 +189,7 @@ Defaults: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`
 
 ## 🐞 Issues
 
-If Radox changes its signup shape or quota, the tool stops at that step and says so. **[Open an issue](../../issues)** with the command you ran and the exact output; PRs are welcome.
+If Radox changes its sign-up shape or quota, the tool stops at that step and says so. **[Open an issue](../../issues)** with the command you ran and the exact output; PRs are welcome.
 
 ## 📄 License
 
