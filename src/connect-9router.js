@@ -4,7 +4,7 @@
 /**
  * Connect Radox AI to a 9Router instance.
  *
- * Radox AI serves an OpenAI-compatible endpoint (https://inference.radox.global/v1), so a single
+ * Radox AI serves an OpenAI-compatible endpoint (https://radoxai.com/v1), so a single
  * provider-node carries every key: this registers one `openai-compatible` node
  * with prefix `radox` and then one connection per API key, named
  * `radox-001`, `radox-002`, … Re-running it is idempotent (an existing node
@@ -13,7 +13,7 @@
  * Usage:
  *   node src/connect-9router.js \
  *     --base http://localhost:20128 --password 123456 \
- *     --api-key dahl_xxxx [--name "Radox AI"] [--prefix radox]
+ *     --api-key cc_xxxx [--name "Radox AI"] [--prefix radox]
  *
  *   node src/connect-9router.js                  # register every key in keys.txt
  *   node src/connect-9router.js --model <id>     # pin the connection's default model
@@ -24,7 +24,7 @@
  *   --api-key <key>    Radox AI API key     (default: every key in keys.txt)
  *   --name <name>      provider-node name       (default Radox AI)
  *   --prefix <slug>    provider prefix in 9Router (default radox)
- *   --base-url <url>   provider base URL        (default https://inference.radox.global/v1)
+ *   --base-url <url>   provider base URL        (default https://radoxai.com/v1)
  *   --model <id>       connection default model (default MiniMaxAI/MiniMax-M2.7)
  *
  * Zero dependencies. Node.js >= 18.
