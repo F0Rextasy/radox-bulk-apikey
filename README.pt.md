@@ -30,7 +30,6 @@
 
 </div>
 
-
 ---
 
 ## 🎁 Nível gratuito — quanto você recebe

@@ -30,7 +30,6 @@
 
 </div>
 
-
 ---
 
 ## 🎁 Forfait gratuit — ce que vous obtenez

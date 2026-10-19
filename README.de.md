@@ -30,7 +30,6 @@
 
 </div>
 
-
 ---
 
 ## 🎁 Kostenloses Kontingent — was Sie erhalten
