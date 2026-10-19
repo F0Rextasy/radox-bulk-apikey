@@ -52,7 +52,7 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 ## 🤖 Models — all 33 of them
 
-`GET https://radoxai.com/v1/models` serves 33 ids; **all 33 answered a live chat 200** when this tool was built (free tier covers the whole catalogue; nothing is paid-gated).
+`GET https://radoxai.com/v1/models` serves 33 ids; **32 of them answered a live chat 200** on the 2026-10-19 re-check (free tier covers the whole catalogue; nothing is paid-gated); `seed-2.1-turbo` did not.
 
 |Model|✓|
 |---|---|
@@ -86,7 +86,6 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 |`qwen3.8-27b`|✓|
 |`qwen3.7-max`|✓|
 |`seed-2.1-pro`|✓|
-|`seed-2.1-turbo`|✓|
 |`muse-spark-1.1`|✓|
 |`gemma-2-2b`|✓|
 

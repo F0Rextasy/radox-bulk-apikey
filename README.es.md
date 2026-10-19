@@ -11,12 +11,12 @@
 
 # radox-bulk-apikey
 
-**Crea cuentas de Radox AI en masa con claves API generadas automáticamente — inferencia compatible con OpenAI (Claude, GPT, Gemini, DeepSeek, Kimi, GLM, Grok) + conector 9Router.**
+**Crea cuentas de Radox AI en masa con claves de API autogeneradas — inferencia compatible con OpenAI (Claude, GPT, Gemini, DeepSeek, Kimi, GLM, Grok) + conector 9Router.**
 
 [![Node](https://img.shields.io/badge/Node-%E2%89%A518-3DA639?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-blue?style=for-the-badge)](#)
-[![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
-[![Models](https://img.shields.io/badge/models-33%20served-412991?style=for-the-badge)](https://radoxai.com)
+[![Dependencias](https://img.shields.io/badge/dependencies-0-blue?style=for-the-badge)](#)
+[![Licencia](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
+[![Modelos](https://img.shields.io/badge/models-33%20served-412991?style=for-the-badge)](https://radoxai.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
@@ -34,17 +34,17 @@
 
 ## 🎁 Nivel gratuito — cuánto obtienes
 
-**Cada cuenta nueva de Radox comienza con 10M de tokens / mes en TODOS los 33 modelos — sin tarjeta, sin teléfono.**
+**Cada cuenta nueva de Radox empieza con 10M de tokens / mes en TODOS los 33 modelos — sin tarjeta, sin teléfono.**
 
 | Qué | Valor |
 | --- | --- |
-| Asignación mensual | **10,000,000 tokens** por cuenta, en cada modelo del catálogo |
+| Asignación mensual | **10.000.000 de tokens** por cuenta, en todos los modelos del catálogo |
 | Tarjeta requerida | **No** |
-| Límite de velocidad | 80 solicitudes / minuto |
+| Límite de peticiones | 80 peticiones / minuto |
 | Registro | correo electrónico + contraseña (se aceptan proveedores estándar como Gmail) |
-| La unidad que escala | **una cuenta = una clave** → `--count N` en realidad significa "N cuentas gratuitas" |
+| La unidad que escala | **una cuenta = una clave** → `--count N` en realidad son "N cuentas gratuitas" |
 
-> 💡 El nivel gratuito lo define Radox AI y puede cambiar. Consulta los números en vivo en [radoxai.com](https://radoxai.com) — y deja que la propia verificación de la herramienta decida:
+> 💡 El nivel gratuito lo define Radox AI y puede cambiar. Consulta las cifras en vivo en [radoxai.com](https://radoxai.com) — y deja que el propio control de la herramienta decida:
 
 ```bash
 node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
@@ -52,9 +52,9 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 ## 🤖 Modelos — los 33
 
-`GET https://radoxai.com/v1/models` sirve 33 ids; **los 33 respondieron un chat en vivo con 200** cuando se construyó esta herramienta (el nivel gratuito cubre todo el catálogo; nada está restringido por pago).
+`GET https://radoxai.com/v1/models` sirve 33 ids; **32 de ellos respondieron un chat en vivo con 200** en la reverificación del 2026-10-19 (el nivel gratuito cubre todo el catálogo; nada está bloqueado por pago); `seed-2.1-turbo` no lo hizo.
 
-|Modelo|✓|
+|Model|✓|
 |---|---|
 |`claude-opus-5`|✓|
 |`claude-opus-5.5`|✓|
@@ -86,7 +86,6 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 |`qwen3.8-27b`|✓|
 |`qwen3.7-max`|✓|
 |`seed-2.1-pro`|✓|
-|`seed-2.1-turbo`|✓|
 |`muse-spark-1.1`|✓|
 |`gemma-2-2b`|✓|
 
@@ -101,7 +100,7 @@ curl https://radoxai.com/v1/chat/completions \
 
 ## 🧪 Cómo usar la API
 
-La URL base es **`https://radoxai.com/v1`** — compatible con OpenAI, así que cualquier cosa que hable OpenAI funciona.
+La URL base es **`https://radoxai.com/v1`** — compatible con OpenAI, así que funciona cualquier cosa que hable OpenAI.
 
 **Cualquier SDK / curl**
 
@@ -112,7 +111,7 @@ print(client.chat.completions.create(model="kimi-k3",
       messages=[{"role": "user", "content": "hi"}]).choices[0].message.content)
 ```
 
-**Claude Code** (superficie compatible con Anthropic — sin sufijo `/v1` en la base):
+**Claude Code** (interfaz compatible con Anthropic — sin sufijo `/v1` en la base):
 
 ```bash
 export ANTHROPIC_BASE_URL="https://radoxai.com"
@@ -121,7 +120,7 @@ export ANTHROPIC_MODEL="claude-opus-5"
 claude
 ```
 
-**Cualquier agente / herramienta con una URL base personalizada** (Cursor, OpenCode, Kilo Code, …): establece la URL base `https://radoxai.com/v1`, pega una clave, elige cualquier id de modelo de la tabla anterior.
+**Cualquier agente / herramienta con una URL base personalizada** (Cursor, OpenCode, Kilo Code, …): configura la URL base `https://radoxai.com/v1`, pega una clave y elige cualquier id de modelo de la tabla de arriba.
 
 ## 🛠 Inicio rápido
 
@@ -138,21 +137,21 @@ node src/launcher.js        # interactive
 node src/cli.js --count 50
 ```
 
-`keys.txt` (replicado en `%USERPROFILE%\radox-keys.txt`) se escribe **solo** después de que una finalización de chat en vivo demuestre que la clave es válida.
+`keys.txt` (replicado en `%USERPROFILE%\radox-keys.txt`) se escribe **solo** después de que una finalización de chat en vivo demuestre que la clave funciona.
 
 ### 🖱️ El lanzador
 
-El lanzador solicita la lista de proxies, la cantidad y el modelo de verificación, los recuerda en `launcher.config.json` y ejecuta la CLI con las opciones correctas.
+El lanzador pregunta por la lista de proxies, la cantidad y el modelo de verificación, los recuerda en `launcher.config.json` y ejecuta la CLI con los indicadores correctos.
 
 ## ✅ Verificado y funcionando — cada clave se prueba
 
 | Comprobación | Resultado |
 | --- | --- |
-| creación de cuenta | `POST /register` crea la cuenta; el propio paso de correo del proveedor responde `500 Server Error` **después** de que la cuenta existe — la herramienta continúa con la sesión en lugar de abortar |
-| verificación de correo | el buzón lleva un **código de 6 dígitos**; enviarlo a `POST /verify-email` (reenvío en `POST /verify-email/resend`) convierte `/dashboard` en la página real |
-| creación de clave | `POST /dashboard/api-keys` — la clave en texto plano se devuelve una vez |
+| creación de cuenta | `POST /register` crea la cuenta; el propio paso de correo del proveedor responde `500 Server Error` **después** de que la cuenta exista — la herramienta continúa con la sesión en lugar de abortar |
+| verificación de correo | el buzón trae un **código de 6 dígitos**; enviarlo a `POST /verify-email` (reenvío en `POST /verify-email/resend`) convierte `/dashboard` en la página real |
+| creación de clave | `POST /dashboard/api-keys` — la clave en texto plano se devuelve una sola vez |
 | prueba en vivo | `POST /v1/chat/completions` — se ejecuta para **cada** clave antes de escribirla en `keys.txt` |
-| una clave que falla la comprobación de chat | nunca se escribe — la cuenta permanece recuperable en `accounts.json` |
+| una clave que falla la comprobación de chat | nunca se escribe — la cuenta sigue siendo recuperable en `accounts.json` |
 
 ## 🧭 Cómo funciona
 
@@ -169,7 +168,7 @@ inbox (one address per account)                                  a fresh address
 | --- | --- | --- |
 | registro | `POST /register` | envío de formulario Laravel con el `_token` de la página |
 | verificación | `POST /verify-email` | el código de 6 dígitos del buzón |
-| clave | `POST /dashboard/api-keys` | clave en texto plano devuelta una vez |
+| clave | `POST /dashboard/api-keys` | clave en texto plano devuelta una sola vez |
 | comprobación | `POST /v1/chat/completions` | se requiere un 200 en vivo antes de `keys.txt` |
 
 ## ⚙️ Opciones de la CLI
@@ -180,47 +179,47 @@ node src/cli.js --verify-only    # re-check every key in keys.txt with a live ch
 node src/cli.js --help
 ```
 
-| Variable de entorno | Predeterminado | Significado |
+| Variable de entorno | Valor predeterminado | Significado |
 | --- | --- | --- |
 | `RADOX_PROXIES` | `proxies.txt` | archivo del grupo, un proxy por línea |
 
 ## 🛰️ Detrás de un proxy
 
-Cada solicitud sale a través de una línea de proxy de tu grupo; una salida muerta hace fallar ese intento y la herramienta pasa a la siguiente — la cuenta se reintenta en una salida nueva, nunca desde tu propia IP.
+Cada petición sale a través de una línea de proxy de tu grupo; una salida muerta hace fallar ese intento y la herramienta pasa a la siguiente — la cuenta se reintenta con una salida nueva, nunca desde tu propia IP.
 
 ## 📄 Archivos
 
 | Ruta | Contenido |
 | --- | --- |
-| `keys.txt` | una clave verificada en vivo por línea — ignorada por git |
-| `accounts.json` | correo electrónico / contraseña / clave / estado del chat por cuenta |
+| `keys.txt` | una clave verificada en vivo por línea — ignorado por git |
+| `accounts.json` | correo / contraseña / clave / estado de chat por cuenta |
 | `proxies.txt` | tus salidas, una por línea — ignorado por git |
-| `outputs/` | estado de ejecución — ignorado por git |
+| `outputs/` | estado de la ejecución — ignorado por git |
 
 ## 🔌 Conectar con 9Router
 
-[9Router](https://9router.com) es un enrutador autoalojado compatible con OpenAI. Registra este proveedor una vez y cada clave se convierte en una conexión bajo un nodo de proveedor:
+[9Router](https://9router.com) es un enrutador autoalojado compatible con OpenAI. Registra este proveedor una vez y cada clave se convierte en una conexión bajo un mismo nodo de proveedor:
 
 ```bash
 node src/connect-9router.js
 # or: npm run 9router
 ```
 
-Valores predeterminados: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Los modelos se sirven entonces como `radox/<model id>` y se equilibran la carga entre todas las claves.
+Valores predeterminados: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Los modelos se sirven entonces como `radox/<model id>` y se balancean entre todas las claves.
 
 ## 🔑 Qué te da una clave
 
 | | |
 | --- | --- |
 | 🏢 Proveedor | **Radox AI** — [radoxai.com](https://radoxai.com) |
-| 🎁 Qué da el proveedor | nivel gratuito, una cuenta por clave — cada clave verificada por chat en 33 modelos |
-| 🔑 Qué te da una clave | una clave API limitada a su propia cuenta: los 33 ids de modelo en el endpoint de abajo, con los límites de tu plan. La cuota vive en la **cuenta**, que es exactamente por lo que esta herramienta crea una cuenta por clave |
+| 🎁 Qué ofrece el proveedor | nivel gratuito, una cuenta por clave — cada clave verificada por chat en los 33 modelos |
+| 🔑 Qué te da una clave | una clave de API limitada a su propia cuenta: los 33 ids de modelo en el endpoint de abajo, con los límites de tu plan. La cuota reside en la **cuenta**, que es exactamente por lo que esta herramienta crea una cuenta por clave |
 | 🌐 Forma de la API | compatible con OpenAI: `POST https://radoxai.com/v1/chat/completions` |
 | 🔒 Tus datos | solo se contacta con radoxai.com y el backend de buzón que configures; las claves permanecen en tu máquina |
 
 ## 🐞 Problemas
 
-Si Radox cambia la forma de su registro o su cuota, la herramienta se detiene en ese paso y lo indica. **[Abre un issue](../../issues)** con el comando que ejecutaste y la salida exacta; los PR son bienvenidos.
+Si Radox cambia la forma de su registro o su cuota, la herramienta se detiene en ese paso y lo indica. **[Abre un issue](../../issues)** con el comando que ejecutaste y la salida exacta; las PR son bienvenidas.
 
 ## 📄 Licencia
 
@@ -228,14 +227,14 @@ MIT © 2026 — consulta [LICENSE](LICENSE).
 
 <div align="center">
 
-**[MIT](LICENSE)** © 2026 radox-bulk-apikey contributors
+**[MIT](LICENSE)** © 2026 colaboradores de radox-bulk-apikey
 
 </div>
 
 ## ⚡ Forma de ejecución (presets)
 
 `--preset=turbo|balanced|safe` establece los workers + la pausa entre cuentas (turbo = 5,
-balanced = 4, safe = 2); `--conc`/`--gap` explícitos (o las propias opciones del repositorio) siempre tienen prioridad,
+balanced = 4, safe = 2); los `--conc`/`--gap` explícitos (o los indicadores propios del repositorio) siempre tienen prioridad,
 y sin `--preset` la herramienta mantiene exactamente su forma histórica.
 
-Turbo önerilir (5 worker); daha fazlası zayıf bilgisayarda yük/ban riski.
+Se recomienda turbo (5 workers); más supone riesgo de carga/ban en equipos débiles.
