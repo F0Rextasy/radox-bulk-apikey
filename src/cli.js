@@ -22,12 +22,18 @@
  *   --verify-only      re-check every key in keys.txt with a live chat call
  *   --screen           only test the proxy list against the host
  *   --model <id>       model used for the live verification (default claude-opus-5)
+ *   --proxies <file>   proxy list, one exit per line (env RADOX_PROXIES) [optional]
  *   --help
  *   --preset=turbo|balanced|safe   run shape = workers + inter-account gap
  *                      (turbo = 5 workers / 3 s — recommended; balanced = 4/6;
  *                      safe = 2/8). Explicit --conc/--gap override the preset.
  *
- * Environment: RADOX_PROXIES (proxy list path, default proxies.txt)
+ * Environment: RADOX_PROXIES (proxy list path, default proxies.txt) [optional]
+ *
+ * Your proxy list is OPTIONAL: pass --proxies (or the RADOX_PROXIES env) and
+ * every request goes through an exit from it; without a pool the tool connects
+ * directly.
+ *
  * Zero dependencies. Node.js >= 18.
  */
 
@@ -60,7 +66,10 @@ if (has('help') || has('h')) {
   console.log('  node src/cli.js --verify-only  re-check keys.txt');
   console.log('  node src/cli.js --screen       test the proxy list against Radox');
   console.log('  node src/cli.js --preset=turbo --count 50 run shape (turbo = 5 workers)');
-  console.log('\nEnv: RADOX_PROXIES (proxy list path, default proxies.txt)');
+  console.log('  node src/cli.js --proxies proxies.txt   proxy list, one exit per line [optional]');
+  console.log('\nEnv: RADOX_PROXIES (proxy list path, default proxies.txt) [optional]');
+  console.log('\nRequests go through your proxy list when one is provided (--proxies / RADOX_PROXIES).');
+  console.log('Without a pool the tool connects directly.');
   process.exit(0);
 }
 
@@ -93,14 +102,21 @@ const PRESET_RUN = resolvePreset({
 function loadProxies() {
   const f = path.resolve(ROOT, PROXY_FILE);
   if (!fs.existsSync(f)) {
-    console.error(`! proxy list not found: ${PROXY_FILE} (one proxy per line: http://host:port)`);
-    process.exit(2);
+    // No pool = DIRECT mode: a proxy is recommended at scale (per-IP limits,
+    // bans) but the tool works without one. `null` is the direct sentinel.
+    console.log(`no proxy list at ${PROXY_FILE} — running WITHOUT a proxy (direct). Put exits there (or pass --proxies) to route through them.`);
+    return [null];
   }
-  return fs
+  const proxies = fs
     .readFileSync(f, 'utf8')
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter((s) => s && !s.startsWith('#'));
+  if (!proxies.length) {
+    console.log(`${PROXY_FILE} has no usable exits — running WITHOUT a proxy (direct).`);
+    return [null];
+  }
+  return proxies;
 }
 
 // ---------------------------------------------------------------- http core
@@ -254,10 +270,11 @@ async function screen(proxies) {
     try {
       const r = await request(px, `${BASE}/register`, { timeoutMs: 15000 });
       const good = r.status === 200 && /_token/.test(r.text);
-      console.log(`${good ? '✔' : '✖'} ${px} -> ${r.status}`);
-      if (good) { ok++; fs.mkdirSync(OUT_DIR, { recursive: true }); fs.appendFileSync(path.join(OUT_DIR, 'proxies-live.txt'), `${px}\n`); }
+      console.log(`${good ? '✔' : '✖'} ${px || 'direct'} -> ${r.status}`);
+      // direct mode is not an exit — never write the sentinel into the live pool
+      if (good) { ok++; if (px) { fs.mkdirSync(OUT_DIR, { recursive: true }); fs.appendFileSync(path.join(OUT_DIR, 'proxies-live.txt'), `${px}\n`); } }
     } catch (e) {
-      console.log(`✖ ${px} -> ${String((e && e.message) || e).slice(0, 60)}`);
+      console.log(`✖ ${px || 'direct'} -> ${String((e && e.message) || e).slice(0, 60)}`);
     }
   }
   console.log(`live ${ok}/${proxies.length}`);

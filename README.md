@@ -128,8 +128,8 @@ claude
 # clone or fork this repository, then:
 cd radox-bulk-apikey
 
-# 1) your proxy list, one per line (http://… or socks5://…)
-printf 'http://127.0.0.1:8080\n' > proxies.txt
+# 1) your proxy list, one per line (http://… or socks5://…) — OPTIONAL
+printf 'http://127.0.0.1:8080\n' > proxies.txt   # skip this to run direct
 
 # 2) go
 node src/launcher.js        # interactive
@@ -181,11 +181,15 @@ node src/cli.js --help
 
 | Environment variable | Default | Meaning |
 | --- | --- | --- |
-| `RADOX_PROXIES` | `proxies.txt` | pool file, one proxy per line |
+| `RADOX_PROXIES` | `proxies.txt` | pool file, one proxy per line — optional |
 
 ## 🛰️ Behind a proxy
 
-Every request leaves through a proxy line from your pool; a dead exit fails that attempt and the tool moves to the next — the account is retried on a fresh exit, never from your own IP.
+**Optional — recommended at scale (per-IP limits, bans).** The tool works without a proxy too.
+
+- **With a pool:** pass `--proxies <file>` (or set `RADOX_PROXIES`) and every request leaves through a proxy line from your pool; a dead exit fails that attempt and the tool moves to the next — the account is retried on a fresh exit. Fail-closed while a pool is provided: a supplied pool never falls back to your own IP.
+- **Without a pool:** the CLI prints `running WITHOUT a proxy (direct)` and connects directly — no `proxies.txt` needed. Sign-up, verification and key minting are unchanged; only where the packets leave from.
+- Run `--screen` against either mode: it tests the exits you have (or the direct route) against Radox before a real run.
 
 ## 📄 Files
 
@@ -193,7 +197,7 @@ Every request leaves through a proxy line from your pool; a dead exit fails that
 | --- | --- |
 | `keys.txt` | one live-verified key per line — git-ignored |
 | `accounts.json` | e-mail / password / key / chat status per account |
-| `proxies.txt` | your exits, one per line — git-ignored |
+| `proxies.txt` | your exits, one per line — optional, git-ignored |
 | `outputs/` | run state — git-ignored |
 
 ## 🔌 Connect to 9Router
