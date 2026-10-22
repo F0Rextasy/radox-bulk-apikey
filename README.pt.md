@@ -18,9 +18,10 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-33%20served-412991?style=for-the-badge)](https://radoxai.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Início rápido](#-quick-start) · [🎁 Nível gratuito](#-free-tier--how-much-you-get) · [🤖 Modelos](#-models--all-33-of-them) · [🧪 Use a API](#-how-to-use-the-api) · [✅ Verificado](#-verified-working--every-key-is-tested) · [🧭 Como funciona](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Opções](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Problemas](#-issues)
+[🛠 Início rápido](#-quick-start) · [🎁 Nível gratuito](#-free-tier--how-much-you-get) · [🤖 Modelos](#-models--all-33-of-them) · [🧪 Use a API](#-how-to-use-the-api) · [✅ Verificado](#-verified-working--every-key-is-tested) · [🧭 Como funciona](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [🔌 OmniRoute](#-connect-to-omniroute) · [⚙️ Opções](#️-cli-options) · [🛰️ Proxies](#️-behind-a-proxy) · [🐞 Problemas](#-issues)
 
 </div>
 
@@ -34,7 +35,7 @@
 
 ## 🎁 Nível gratuito — quanto você recebe
 
-**Toda nova conta Radox começa com 10M de tokens/mês em TODOS os 33 modelos — sem cartão, sem telefone.**
+**Toda nova conta Radox começa com 10M de tokens / mês em TODOS os 33 modelos — sem cartão, sem telefone.**
 
 | O quê | Valor |
 | --- | --- |
@@ -42,9 +43,9 @@
 | Cartão exigido | **Não** |
 | Limite de requisições | 80 requisições / minuto |
 | Cadastro | e-mail + senha (provedores padrão como Gmail são aceitos) |
-| A unidade que escala | **uma conta = uma chave** → `--count N` na verdade significa "N contas gratuitas" |
+| A unidade que escala | **uma conta = uma chave** → `--count N` significa, na prática, "N contas gratuitas" |
 
-> 💡 O nível gratuito é definido pela Radox AI e pode mudar. Confira os números atuais em [radoxai.com](https://radoxai.com) — e deixe a verificação da própria ferramenta decidir:
+> 💡 O nível gratuito é definido pela Radox AI e pode mudar. Confira os números atuais em [radoxai.com](https://radoxai.com) — e deixe o próprio gate da ferramenta decidir:
 
 ```bash
 node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
@@ -52,7 +53,7 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 ## 🤖 Modelos — todos os 33
 
-`GET https://radoxai.com/v1/models` serve 33 ids; **32 deles responderam a um chat ao vivo com 200** na reverificação de 2026-10-19 (o nível gratuito cobre todo o catálogo; nada é bloqueado por pagamento); `seed-2.1-turbo` não respondeu.
+`GET https://radoxai.com/v1/models` serve 33 ids; **32 deles responderam a um chat ao vivo com 200** na reverificação de 2026-10-19 (o nível gratuito cobre todo o catálogo; nada é restrito a pagamento); `seed-2.1-turbo` não respondeu.
 
 |Modelo|✓|
 |---|---|
@@ -125,35 +126,38 @@ claude
 ## 🛠 Início rápido
 
 ```bash
-
 # clone or fork this repository, then:
 cd radox-bulk-apikey
 
-# 1) your proxy list, one per line (http://… or socks5://…)
-printf 'http://127.0.0.1:8080\n' > proxies.txt
+# 1) your proxy list, one per line (http://… or socks5://…) — OPTIONAL
+printf 'http://127.0.0.1:8080\n' > proxies.txt   # skip this to run direct
 
 # 2) go
 node src/launcher.js        # interactive
-
 # or directly:
 node src/cli.js --count 50
 ```
 
-`keys.txt` (espelhado em `%USERPROFILE%\radox-keys.txt`) é gravado **somente** depois que uma conclusão de chat ao vivo comprova a chave.
+`keys.txt` (espelhado em `%USERPROFILE%\radox-keys.txt`) é escrito **somente** depois que uma conclusão de chat ao vivo comprova a chave.
 
 ### 🖱️ O launcher
 
-O launcher solicita a lista de proxies, a quantidade e o modelo de verificação, lembra esses dados em `launcher.config.json` e executa a CLI com as flags corretas.
+O launcher pergunta pela lista de proxies, quantidade e modelo de verificação, memoriza tudo em `launcher.config.json` e executa a CLI com as flags corretas.
 
 ## ✅ Verificado e funcionando — toda chave é testada
 
+> **Gates de qualidade.** Toda chave aqui passou por um `chat-200` ao vivo antes de ser escrita em `keys.txt`
+> (chaves mortas nunca são entregues). As combinações de roteadores seguem a mesma regra no nível do modelo: uma entrada é
+> adicionada **somente se o modelo responder `chat-200` e conseguir chamar ferramentas** — um modelo sem suporte a ferramentas,
+> uma chave morta ou um provedor morto é descartado em vez de adicionado. Funciona com **9Router e OmniRoute**.
+
 | Verificação | Resultado |
 | --- | --- |
-| criação de conta | `POST /register` cria a conta; a etapa de e-mail do próprio provedor responde `500 Server Error` **depois** que a conta existe — a ferramenta continua na sessão em vez de abortar |
-| verificação de e-mail | a caixa de entrada contém um **código de 6 dígitos**; enviá-lo para `POST /verify-email` (reenvio em `POST /verify-email/resend`) transforma `/dashboard` na página real |
-| criação de chave | `POST /dashboard/api-keys` — a chave em texto simples é retornada uma vez |
-| prova ao vivo | `POST /v1/chat/completions` — executado para **cada** chave antes de ser gravada em `keys.txt` |
-| uma chave que falha na verificação de chat | nunca é gravada — a conta permanece recuperável em `accounts.json` |
+| criação de conta | `POST /register` cria a conta; a própria etapa de e-mail do provedor responde `500 Server Error` **depois** que a conta existe — a ferramenta continua na sessão em vez de abortar |
+| verificação de e-mail | a caixa de entrada traz um **código de 6 dígitos**; enviá-lo para `POST /verify-email` (reenvio em `POST /verify-email/resend`) transforma `/dashboard` na página real |
+| criação de chave | `POST /dashboard/api-keys` — a chave em texto puro é retornada uma única vez |
+| prova ao vivo | `POST /v1/chat/completions` — executado para **toda** chave antes de ser escrita em `keys.txt` |
+| uma chave que falha na verificação de chat | nunca é escrita — a conta permanece recuperável em `accounts.json` |
 
 ## 🧭 Como funciona
 
@@ -167,10 +171,10 @@ inbox (one address per account)                                  a fresh address
 ```
 
 | Etapa | Chamada | Observações |
-| --- | --- | --- |
-| cadastro | `POST /register` | envio de formulário Laravel com o `_token` da página |
-| verificar | `POST /verify-email` | o código de 6 dígitos da caixa de entrada |
-| chave | `POST /dashboard/api-keys` | chave em texto simples retornada uma vez |
+| --- | --- |
+| cadastro | `POST /register` | post de formulário Laravel com o `_token` da página |
+| verificação | `POST /verify-email` | o código de 6 dígitos da caixa de entrada |
+| chave | `POST /dashboard/api-keys` | chave em texto puro retornada uma única vez |
 | verificação | `POST /v1/chat/completions` | 200 ao vivo exigido antes de `keys.txt` |
 
 ## ⚙️ Opções da CLI
@@ -183,11 +187,15 @@ node src/cli.js --help
 
 | Variável de ambiente | Padrão | Significado |
 | --- | --- | --- |
-| `RADOX_PROXIES` | `proxies.txt` | arquivo de pool, um proxy por linha |
+| `RADOX_PROXIES` | `proxies.txt` | arquivo de pool, um proxy por linha — opcional |
 
 ## 🛰️ Atrás de um proxy
 
-Cada requisição sai por uma linha de proxy do seu pool; uma saída morta faz aquela tentativa falhar e a ferramenta passa para a próxima — a conta é tentada novamente em uma saída nova, nunca a partir do seu próprio IP.
+**Opcional — recomendado em escala (limites por IP, banimentos).** A ferramenta também funciona sem proxy.
+
+- **Com um pool:** passe `--proxies <file>` (ou defina `RADOX_PROXIES`) e toda requisição sai por uma linha de proxy do seu pool; uma saída morta faz aquela tentativa falhar e a ferramenta passa para a próxima — a conta é tentada novamente em uma saída nova. Fail-closed enquanto um pool é fornecido: um pool fornecido nunca recorre ao seu próprio IP.
+- **Sem um pool:** a CLI imprime `running WITHOUT a proxy (direct)` e conecta diretamente — nenhum `proxies.txt` é necessário. Cadastro, verificação e criação de chave permanecem inalterados; só muda de onde os pacotes saem.
+- Execute `--screen` em qualquer um dos modos: ele testa as saídas que você tem (ou a rota direta) contra a Radox antes de uma execução real.
 
 ## 📄 Arquivos
 
@@ -195,48 +203,57 @@ Cada requisição sai por uma linha de proxy do seu pool; uma saída morta faz a
 | --- | --- |
 | `keys.txt` | uma chave verificada ao vivo por linha — ignorado pelo git |
 | `accounts.json` | e-mail / senha / chave / status de chat por conta |
-| `proxies.txt` | suas saídas, uma por linha — ignorado pelo git |
+| `proxies.txt` | suas saídas, uma por linha — opcional, ignorado pelo git |
 | `outputs/` | estado da execução — ignorado pelo git |
 
 ## 🔌 Conectar ao 9Router
 
-[9Router](https://9router.com) é um roteador auto-hospedado e compatível com OpenAI. Registre este provedor uma vez e cada chave se torna uma conexão sob um nó de provedor:
+[9Router](https://9router.com) é um roteador auto-hospedado e compatível com OpenAI. Registre este provedor uma vez e toda chave se torna uma conexão sob um nó de provedor:
 
 ```bash
 node src/connect-9router.js
+
+```
+
+## 🔌 Conectar ao OmniRoute
+
+[OmniRoute](https://omniroute.online) é um roteador auto-hospedado e compatível com OpenAI. Registre este provedor uma vez e toda chave se torna uma conexão sob um nó de provedor:
+
+```bash
+node src/connect-omniroute.js
 # or: npm run 9router
 ```
 
-Padrões: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Os modelos então são servidos como `radox/<model id>` e balanceados entre todas as chaves.
+Padrões: `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Os modelos são então servidos como `radox/<model id>` e balanceados entre todas as chaves.
 
 ## 🔑 O que uma chave oferece
 
 | | |
 | --- | --- |
 | 🏢 Provedor | **Radox AI** — [radoxai.com](https://radoxai.com) |
-| 🎁 O que o provedor oferece | nível gratuito, uma conta por chave — cada chave verificada por chat em 33 modelos |
+| 🎁 O que o provedor oferece | nível gratuito, uma conta por chave — toda chave verificada por chat em 33 modelos |
 | 🔑 O que uma chave oferece | uma chave de API vinculada à sua própria conta: os 33 ids de modelo no endpoint abaixo, nos limites do seu plano. A cota fica na **conta**, e é exatamente por isso que esta ferramenta cria uma conta por chave |
-| 🌐 Formato da API | Compatível com OpenAI: `POST https://radoxai.com/v1/chat/completions` |
-| 🔒 Seus dados | somente radoxai.com e o backend de caixa de entrada que você configurar são contatados; as chaves ficam na sua máquina |
+| 🌐 Formato da API | compatível com OpenAI: `POST https://radoxai.com/v1/chat/completions` |
+| 🔒 Seus dados | apenas radoxai.com e o backend de caixa de entrada que você configurar são contatados; as chaves ficam na sua máquina |
 
 ## 🐞 Problemas
 
-Se a Radox alterar o formato do cadastro ou a cota, a ferramenta para nessa etapa e informa. **[Abra uma issue](../../issues)** com o comando executado e a saída exata; PRs são bem-vindos.
+Se a Radox mudar o formato do cadastro ou a cota, a ferramenta para nessa etapa e avisa. **[Abra uma issue](../../issues)** com o comando que você executou e a saída exata; PRs são bem-vindos.
 
 ## 📄 Licença
 
-MIT © 2026 — consulte [LICENSE](LICENSE).
+MIT © 2026 — veja [LICENSE](LICENSE).
 
 <div align="center">
 
-**[MIT](LICENSE)** © 2026 colaboradores do radox-bulk-apikey
+**[MIT](LICENSE)** © 2026 radox-bulk-apikey contributors
 
 </div>
 
 ## ⚡ Formato de execução (presets)
 
 `--preset=turbo|balanced|safe` define workers + a pausa entre contas (turbo = 5,
-balanced = 4, safe = 2); `--conc`/`--gap` explícitos (ou as próprias flags do repositório) sempre prevalecem,
+balanced = 4, safe = 2); `--conc`/`--gap` explícitos (ou as próprias flags do repositório) sempre vencem,
 e sem `--preset` a ferramenta mantém exatamente seu formato histórico.
 
-Turbo é recomendado (5 workers); mais do que isso traz risco de carga/ban em computadores fracos.
+Turbo önerilir (5 worker); daha fazlası zayıf bilgisayarda yük/ban riski.

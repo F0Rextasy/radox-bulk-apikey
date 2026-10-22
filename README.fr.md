@@ -18,9 +18,10 @@
 [![License](https://img.shields.io/badge/license-MIT-6ea8fe?style=for-the-badge)](LICENSE)
 [![Models](https://img.shields.io/badge/models-33%20served-412991?style=for-the-badge)](https://radoxai.com)
 [![9Router](https://img.shields.io/badge/9Router-connector-8B5CF6?style=for-the-badge)](#-connect-to-9router)
+[![OmniRoute](https://img.shields.io/badge/OmniRoute-connector-8B5CF6?style=for-the-badge)](#-connect-to-omniroute)
 [![X](https://img.shields.io/badge/X-%40bigbullapp-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/bigbullapp)
 
-[🛠 Démarrage rapide](#-quick-start) · [🎁 Offre gratuite](#-free-tier--how-much-you-get) · [🤖 Modèles](#-models--all-33-of-them) · [🧪 Utiliser l'API](#-how-to-use-the-api) · [✅ Vérifié](#-verified-working--every-key-is-tested) · [🧭 Fonctionnement](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [⚙️ Options](#️-cli-options) · [🛰️ Proxys](#️-behind-a-proxy) · [🐞 Problèmes](#-issues)
+[🛠 Démarrage rapide](#-quick-start) · [🎁 Offre gratuite](#-free-tier--how-much-you-get) · [🤖 Modèles](#-models--all-33-of-them) · [🧪 Utiliser l'API](#-how-to-use-the-api) · [✅ Vérifié](#-verified-working--every-key-is-tested) · [🧭 Comment ça marche](#-how-it-works) · [🔌 9Router](#-connect-to-9router) · [🔌 OmniRoute](#-connect-to-omniroute) · [⚙️ Options](#️-cli-options) · [🛰️ Proxys](#️-behind-a-proxy) · [🐞 Problèmes](#-issues)
 
 </div>
 
@@ -34,17 +35,17 @@
 
 ## 🎁 Offre gratuite — ce que vous obtenez
 
-**Chaque nouveau compte Radox commence avec 10M de tokens / mois sur l'ENSEMBLE des 33 modèles — sans carte, sans téléphone.**
+**Chaque nouveau compte Radox démarre avec 10 M de tokens / mois sur TOUS les 33 modèles — sans carte, sans téléphone.**
 
-| Élément | Valeur |
+| Quoi | Valeur |
 | --- | --- |
 | Allocation mensuelle | **10 000 000 de tokens** par compte, sur chaque modèle du catalogue |
 | Carte requise | **Non** |
 | Limite de débit | 80 requêtes / minute |
 | Inscription | e-mail + mot de passe (les fournisseurs standards comme Gmail sont acceptés) |
-| L'unité qui s'adapte | **un compte = une clé** → `--count N` signifie en réalité « N comptes gratuits » |
+| L'unité qui évolue | **un compte = une clé** → `--count N` signifie en réalité « N comptes gratuits » |
 
-> 💡 L'offre gratuite est définie par Radox AI et peut changer. Consultez les chiffres en direct sur [radoxai.com](https://radoxai.com) — et laissez la vérification propre à l'outil décider :
+> 💡 L'offre gratuite est définie par Radox AI et peut changer. Consultez les chiffres en direct sur [radoxai.com](https://radoxai.com) — et laissez le contrôle de l'outil en décider :
 
 ```bash
 node src/cli.js --verify-only     # every key in keys.txt is re-tested with a real chat call
@@ -52,7 +53,7 @@ node src/cli.js --verify-only     # every key in keys.txt is re-tested with a re
 
 ## 🤖 Modèles — tous les 33
 
-`GET https://radoxai.com/v1/models` sert 33 identifiants ; **32 d'entre eux ont répondu 200 à un chat en direct** lors de la re-vérification du 2026-10-19 (l'offre gratuite couvre tout le catalogue ; rien n'est réservé au payant) ; `seed-2.1-turbo` n'a pas répondu.
+`GET https://radoxai.com/v1/models` sert 33 identifiants ; **32 d'entre eux ont répondu à un chat en direct 200** lors de la revérification du 2026-10-19 (l'offre gratuite couvre tout le catalogue ; rien n'est réservé au payant) ; `seed-2.1-turbo` n'a pas répondu.
 
 |Modèle|✓|
 |---|---|
@@ -125,37 +126,40 @@ claude
 ## 🛠 Démarrage rapide
 
 ```bash
-
 # clone or fork this repository, then:
 cd radox-bulk-apikey
 
-# 1) your proxy list, one per line (http://… or socks5://…)
-printf 'http://127.0.0.1:8080\n' > proxies.txt
+# 1) your proxy list, one per line (http://… or socks5://…) — OPTIONAL
+printf 'http://127.0.0.1:8080\n' > proxies.txt   # skip this to run direct
 
 # 2) go
 node src/launcher.js        # interactive
-
 # or directly:
 node src/cli.js --count 50
 ```
 
-`keys.txt` (dupliqué dans `%USERPROFILE%\radox-keys.txt`) n'est écrit **qu'**après qu'une complétion de chat en direct a prouvé la validité de la clé.
+`keys.txt` (dupliqué vers `%USERPROFILE%\radox-keys.txt`) n'est écrit **qu'** après qu'une complétion de chat en direct a prouvé la clé.
 
 ### 🖱️ Le lanceur
 
-Le lanceur demande la liste des proxys, le nombre et le modèle de vérification, les mémorise dans `launcher.config.json` et exécute la CLI avec les bons paramètres.
+Le lanceur demande la liste de proxys, le nombre et le modèle de vérification, les mémorise dans `launcher.config.json`, et exécute le CLI avec les bons drapeaux.
 
 ## ✅ Vérifié fonctionnel — chaque clé est testée
 
+> **Contrôles qualité.** Chaque clé ici a passé un `chat-200` en direct avant d'être écrite dans `keys.txt`
+> (les clés mortes ne sont jamais livrées). Les combinaisons de routeur suivent la même règle au niveau du modèle : une entrée est
+> ajoutée **uniquement si le modèle répond `chat-200` et peut appeler des outils** — un modèle sans prise en charge des outils,
+> une clé morte ou un fournisseur mort est écarté au lieu d'être ajouté. Fonctionne avec **9Router et OmniRoute**.
+
 | Vérification | Résultat |
 | --- | --- |
-| création du compte | `POST /register` crée le compte ; l'étape e-mail propre au fournisseur répond `500 Server Error` **après** que le compte existe — l'outil poursuit sur la session au lieu d'abandonner |
-| vérification e-mail | la boîte mail contient un **code à 6 chiffres** ; l'envoyer à `POST /verify-email` (renvoi via `POST /verify-email/resend`) transforme `/dashboard` en vraie page |
+| création de compte | `POST /register` crée le compte ; l'étape e-mail propre au fournisseur répond `500 Server Error` **après** que le compte existe — l'outil continue sur la session au lieu d'abandonner |
+| vérification e-mail | la boîte mail contient un **code à 6 chiffres** ; le poster sur `POST /verify-email` (renvoi sur `POST /verify-email/resend`) transforme `/dashboard` en vraie page |
 | création de clé | `POST /dashboard/api-keys` — la clé en clair est renvoyée une seule fois |
 | preuve en direct | `POST /v1/chat/completions` — exécuté pour **chaque** clé avant son écriture dans `keys.txt` |
 | une clé qui échoue au test de chat | jamais écrite — le compte reste récupérable dans `accounts.json` |
 
-## 🧭 Fonctionnement
+## 🧭 Comment ça marche
 
 ```
 inbox (one address per account)                                  a fresh address per account
@@ -166,14 +170,14 @@ inbox (one address per account)                                  a fresh address
    └─▶ live proof: POST https://radoxai.com/v1/chat/completions → real content = the key is live
 ```
 
-| Étape | Appel | Remarques |
+| Étape | Appel | Notes |
 | --- | --- | --- |
 | inscription | `POST /register` | envoi de formulaire Laravel avec le `_token` de la page |
-| vérification | `POST /verify-email` | le code à 6 chiffres provenant de la boîte mail |
+| vérification | `POST /verify-email` | le code à 6 chiffres de la boîte mail |
 | clé | `POST /dashboard/api-keys` | clé en clair renvoyée une seule fois |
 | contrôle | `POST /v1/chat/completions` | un 200 en direct requis avant `keys.txt` |
 
-## ⚙️ Options de la CLI
+## ⚙️ Options du CLI
 
 ```bash
 node src/cli.js --count N        # mint (default 50)
@@ -181,47 +185,60 @@ node src/cli.js --verify-only    # re-check every key in keys.txt with a live ch
 node src/cli.js --help
 ```
 
-| Variable d'environnement | Valeur par défaut | Signification |
+| Variable d'environnement | Défaut | Signification |
 | --- | --- | --- |
-| `RADOX_PROXIES` | `proxies.txt` | fichier de pool, un proxy par ligne |
+| `RADOX_PROXIES` | `proxies.txt` | fichier de pool, un proxy par ligne — facultatif |
 
 ## 🛰️ Derrière un proxy
 
-Chaque requête sort via une ligne de proxy de votre pool ; une sortie morte fait échouer cette tentative et l'outil passe à la suivante — le compte est réessayé sur une sortie fraîche, jamais depuis votre propre IP.
+**Facultatif — recommandé à grande échelle (limites par IP, bannissements).** L'outil fonctionne aussi sans proxy.
+
+- **Avec un pool :** passez `--proxies <file>` (ou définissez `RADOX_PROXIES`) et chaque requête sort via une ligne de proxy de votre pool ; une sortie morte fait échouer cette tentative et l'outil passe à la suivante — le compte est réessayé sur une nouvelle sortie. Échec fermé tant qu'un pool est fourni : un pool fourni ne retombe jamais sur votre propre IP.
+- **Sans pool :** le CLI affiche `running WITHOUT a proxy (direct)` et se connecte directement — aucun `proxies.txt` nécessaire. L'inscription, la vérification et la création de clé sont inchangées ; seul le point de sortie des paquets change.
+- Lancez `--screen` dans l'un ou l'autre mode : il teste les sorties dont vous disposez (ou la route directe) contre Radox avant une exécution réelle.
 
 ## 📄 Fichiers
 
 | Chemin | Contenu |
 | --- | --- |
 | `keys.txt` | une clé vérifiée en direct par ligne — ignoré par git |
-| `accounts.json` | e-mail / mot de passe / clé / statut du chat par compte |
-| `proxies.txt` | vos sorties, une par ligne — ignoré par git |
+| `accounts.json` | e-mail / mot de passe / clé / statut de chat par compte |
+| `proxies.txt` | vos sorties, une par ligne — facultatif, ignoré par git |
 | `outputs/` | état d'exécution — ignoré par git |
 
 ## 🔌 Connexion à 9Router
 
-[9Router](https://9router.com) est un routeur auto-hébergé et compatible OpenAI. Enregistrez ce fournisseur une fois et chaque clé devient une connexion sous un même nœud fournisseur :
+[9Router](https://9router.com) est un routeur auto-hébergé, compatible OpenAI. Enregistrez ce fournisseur une fois et chaque clé devient une connexion sous un seul nœud fournisseur :
 
 ```bash
 node src/connect-9router.js
+
+```
+
+## 🔌 Connexion à OmniRoute
+
+[OmniRoute](https://omniroute.online) est un routeur auto-hébergé, compatible OpenAI. Enregistrez ce fournisseur une fois et chaque clé devient une connexion sous un seul nœud fournisseur :
+
+```bash
+node src/connect-omniroute.js
 # or: npm run 9router
 ```
 
-Valeurs par défaut : `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Les modèles sont alors servis sous la forme `radox/<model id>` et répartis en charge entre toutes les clés.
+Valeurs par défaut : `--base http://localhost:20128`, `--password 123456`, `--name "Radox"`, `--prefix radox`, `--base-url https://radoxai.com/v1`. Les modèles sont alors servis sous `radox/<model id>` et répartis en charge sur chaque clé.
 
-## 🔑 Ce qu'une clé vous apporte
+## 🔑 Ce qu'une clé vous donne
 
 | | |
 | --- | --- |
 | 🏢 Fournisseur | **Radox AI** — [radoxai.com](https://radoxai.com) |
-| 🎁 Ce que le fournisseur offre | offre gratuite, un compte par clé — chaque clé vérifiée par chat sur 33 modèles |
-| 🔑 Ce qu'une clé vous apporte | une clé API limitée à son propre compte : les 33 identifiants de modèles sur le point de terminaison ci-dessous, dans les limites de votre forfait. Le quota est attaché au **compte**, ce qui explique précisément pourquoi cet outil crée un compte par clé |
+| 🎁 Ce que le fournisseur donne | offre gratuite, un compte par clé — chaque clé vérifiée par chat sur 33 modèles |
+| 🔑 Ce qu'une clé vous donne | une clé API limitée à son propre compte : les 33 identifiants de modèles sur le point de terminaison ci-dessous, aux limites de votre offre. Le quota vit sur le **compte**, c'est exactement pourquoi cet outil crée un compte par clé |
 | 🌐 Forme de l'API | compatible OpenAI : `POST https://radoxai.com/v1/chat/completions` |
 | 🔒 Vos données | seuls radoxai.com et le backend de boîte mail que vous configurez sont contactés ; les clés restent sur votre machine |
 
 ## 🐞 Problèmes
 
-Si Radox modifie la forme de son inscription ou son quota, l'outil s'arrête à cette étape et le signale. **[Ouvrez un ticket](../../issues)** en indiquant la commande exécutée et la sortie exacte ; les PR sont les bienvenues.
+Si Radox modifie la forme de son inscription ou son quota, l'outil s'arrête à cette étape et le signale. **[Ouvrez un ticket](../../issues)** avec la commande que vous avez exécutée et la sortie exacte ; les PR sont bienvenues.
 
 ## 📄 Licence
 
@@ -236,7 +253,7 @@ MIT © 2026 — voir [LICENSE](LICENSE).
 ## ⚡ Forme d'exécution (préréglages)
 
 `--preset=turbo|balanced|safe` définit les workers + la pause entre les comptes (turbo = 5,
-balanced = 4, safe = 2) ; des `--conc`/`--gap` explicites (ou les paramètres propres du dépôt) l'emportent toujours,
+balanced = 4, safe = 2) ; les `--conc`/`--gap` explicites (ou les drapeaux propres au dépôt) l'emportent toujours,
 et sans `--preset` l'outil conserve exactement sa forme historique.
 
-Turbo est recommandé (5 workers) ; davantage présente un risque de charge/ban sur une machine faible.
+Turbo önerilir (5 worker); daha fazlası zayıf bilgisayarda yük/ban riski.
