@@ -178,18 +178,20 @@ function request(proxyLine, url, { method = 'GET', headers = {}, body = null, fo
     };
     if (!proxyLine || /^socks/i.test(proxyLine)) return direct();
     const p = new URL(proxyLine.startsWith('http') ? proxyLine : `http://${proxyLine}`);
+    // A CONNECT request answers on the `connect` event, not the response callback —
+    // registering a response handler here makes every tunnelled call hang.
     const connect = require('http').request(
-      { method: 'CONNECT', host: p.hostname, port: p.port, path: `${u.hostname}:443`, headers: { host: `${u.hostname}:443` }, timeout: 10000 },
-      (res) => {
-        if (res.statusCode !== 200) return reject(new Error(`proxy CONNECT ${res.statusCode}`));
-        res.socket.once('error', reject);
-        const r = https.request({ method, socket: res.socket, servername: u.hostname, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs }, done);
-        r.setTimeout(timeoutMs, () => r.destroy(new Error('timeout')));
-        r.on('error', reject);
-        if (payload) r.write(payload);
-        r.end();
-      }
+      { method: 'CONNECT', host: p.hostname, port: p.port, path: `${u.hostname}:443`, headers: { host: `${u.hostname}:443` }, timeout: 10000 }
     );
+    connect.on('connect', (res, socket) => {
+      if (res.statusCode !== 200) return reject(new Error(`proxy CONNECT ${res.statusCode}`));
+      socket.once('error', reject);
+      const r = https.request({ method, socket, servername: u.hostname, host: u.hostname, port: 443, path: u.pathname + u.search, headers: hs }, done);
+      r.setTimeout(timeoutMs, () => r.destroy(new Error('timeout')));
+      r.on('error', reject);
+      if (payload) r.write(payload);
+      r.end();
+    });
     connect.setTimeout(10000, () => connect.destroy(new Error('proxy CONNECT timeout')));
     connect.on('error', reject);
     connect.end();
