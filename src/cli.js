@@ -67,12 +67,18 @@ const BASE = 'https://radoxai.com';
 const EMAILNATOR = 'https://www.emailnator.com';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36';
 
+// Shared/disposable boxes carry other tenants' mail: only a message that names
+// this panel may supply the code (measured 2026-10-24: dddai read a stranger's
+// code from a shared box). Override: --brand / RADOX_BRAND_RE.
+let BRAND = new RegExp(process.env.RADOX_BRAND_RE || 'radoxai\\.com|radox', 'i');
+
 const argv = process.argv.slice(2);
 const arg = (n, d) => {
   const i = argv.indexOf(`--${n}`);
   return i !== -1 && argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : d;
 };
 const has = (n) => argv.includes(`--${n}`);
+if (arg('brand')) BRAND = new RegExp(arg('brand'), 'i'); // --brand overrides the mail fence
 
 if (has('help') || has('h')) {
   console.log('radox-bulk-apikey — mint Radox AI accounts, one key each, verified by a live chat call.\n');
@@ -81,6 +87,7 @@ if (has('help') || has('h')) {
   console.log('  node src/cli.js --screen       test the proxy list against Radox');
   console.log('  node src/cli.js --preset=turbo --count 50 run shape (turbo = 5 workers)');
   console.log('  node src/cli.js --proxies proxies.txt   proxy list, one exit per line [optional]');
+  console.log('  --brand RE                     sender/subject fence for the code mail (env RADOX_BRAND_RE)');
   console.log('\nEnv: RADOX_PROXIES (proxy list path, default proxies.txt) [optional]');
   console.log('\nRequests go through your proxy list when one is provided (--proxies / RADOX_PROXIES).');
   console.log('Without a pool the tool connects directly.');
@@ -242,21 +249,36 @@ async function newGmail(proxies, proxy) {
   }
   throw new Error('emailnator: no address');
 }
-async function waitRadoxMail(proxies, proxy, addr, { timeoutMs = 180000, pollMs = 8000 } = {}) {
+/**
+ * Ids already in the shared Emailnator box, taken BEFORE the code request. The
+ * gmail pool is recycled, so a pre-send id belongs to another tenant; a snapshot
+ * that fails is not an empty box — it retries, then throws.
+ */
+async function snapshotIds(proxies, proxy, plain) {
+  for (let k = 0; k < 4; k++) {
+    try {
+      const r = await requestR(proxies, proxy, `${EMAILNATOR}/api/message-list`, { method: 'POST', body: { email: plain, limit: 20 } });
+      const msgs = (jparse(r.text) || {}).messages;
+      if (Array.isArray(msgs)) return new Set(msgs.map((m) => String((m && m.id) || '')).filter(Boolean));
+    } catch (e) { /* retry */ }
+    await sleep(4000);
+  }
+  throw new Error('inbox snapshot failed (exits unhealthy)');
+}
+async function waitRadoxMail(proxies, proxy, addr, { timeoutMs = 180000, pollMs = 8000, seenIds = [] } = {}) {
   const deadline = Date.now() + timeoutMs;
-  const seen = new Set();
-  let primed = false; // skip what is already in the shared mailbox; wait for a NEW radox mail
+  const seen = new Set(seenIds); // the pre-send snapshot is the fence: older ids are another tenant's mail
   while (Date.now() < deadline) {
     const r = await requestR(proxies, proxy, `${EMAILNATOR}/api/message-list`, { method: 'POST', body: { email: addr.plain, limit: 20 }, headers: { origin: EMAILNATOR, referer: EMAILNATOR + '/' } });
     const j = jparse(r.text);
     for (const m of (j && j.messages) || []) {
       const id = String(m.id);
-      if (!primed) { seen.add(id); continue; }
       if (seen.has(id)) continue;
       seen.add(id);
       const from = String(m.from || m.sender || '');
       const subject = String(m.subject || '');
-      if (!/radox/i.test(from + ' ' + subject)) continue;
+      const hay = `${m.from || ''} ${m.subject || ''}`;
+      if (!BRAND.test(hay)) continue; // the panel's own mail only
       const full = await requestR(proxies, proxy, `${EMAILNATOR}/api/message/${encodeURIComponent(id)}`, {});
       const content = String((jparse(full.text) || {}).content || '');
       const text = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
@@ -265,7 +287,6 @@ async function waitRadoxMail(proxies, proxy, addr, { timeoutMs = 180000, pollMs 
       const radoxLink = links.find((h) => /radoxai\.com/i.test(h) && /verif|confirm|email/i.test(h)) || links.find((h) => /radoxai\.com/i.test(h));
       return { id, from, subject, content, text, code, radoxLink };
     }
-    primed = true;
     await sleep(pollMs);
   }
   throw new Error('no verification mail');
@@ -298,6 +319,7 @@ async function screen(proxies) {
 
 async function mintOne(proxies, proxy, index, accounts) {
   const addr = await newGmail(proxies, proxy);
+  const seenIds = await snapshotIds(proxies, proxy, addr.plain);
   const username = 'radox' + Math.random().toString(36).slice(2, 8);
   const password = 'Rx' + Math.random().toString(36).slice(2, 10) + '!9';
   resetJar();
@@ -316,12 +338,12 @@ async function mintOne(proxies, proxy, index, accounts) {
   let verified = dash1.status === 200;
   if (!verified) {
     let mail = null;
-    try { mail = await waitRadoxMail(proxies, proxy, addr, { timeoutMs: 45000, pollMs: 6000 }); } catch (e) { mail = null; }
+    try { mail = await waitRadoxMail(proxies, proxy, addr, { timeoutMs: 45000, pollMs: 6000, seenIds }); } catch (e) { mail = null; }
     if (!mail) {
       const ve = await requestR(proxies, proxy, `${BASE}/verify-email`, { withCookies: true });
       const t2 = htmlToken(ve.text);
       await requestR(proxies, proxy, `${BASE}/verify-email/resend`, { method: 'POST', withCookies: true, form: { _token: t2 || '' }, headers: { origin: BASE, referer: `${BASE}/verify-email` } }).catch(() => {});
-      mail = await waitRadoxMail(proxies, proxy, addr);
+      mail = await waitRadoxMail(proxies, proxy, addr, { seenIds });
     }
     if (mail.code) {
       const ve2 = await requestR(proxies, proxy, `${BASE}/verify-email`, { withCookies: true });
